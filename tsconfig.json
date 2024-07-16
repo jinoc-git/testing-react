@@ -6,6 +6,9 @@
     "module": "ESNext",
     "skipLibCheck": true,
 
+    // 테스트 코드 작성 시 import { it, expect, describe } from 'vitest'; 부분을 작성하지 않아도 된다.
+    "types": ["vitest/globals"],
+
     /* Bundler mode */
     "moduleResolution": "bundler",
     "allowImportingTsExtensions": true,

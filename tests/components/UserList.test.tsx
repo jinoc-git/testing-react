@@ -18,9 +18,9 @@ describe('UserList', () => {
     render(<UserList users={users} />);
 
     users.forEach((user) => {
-      const link = screen.getByRole('link', { name: user.name });
+      const link = screen.getByRole('link', { name: user.name }); // a 태그 중 user.name이란 텍스트가 있는 태그
       expect(link).toBeInTheDocument();
-      expect(link).toHaveAttribute('href', `/users/${user.id}`);
+      expect(link).toHaveAttribute('href', `/users/${user.id}`); // href 속성이/users/user.id 인지
     });
   });
 });

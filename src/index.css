@@ -33,6 +33,10 @@ a:hover {
   color: #fff;
   padding: 0.2rem 1rem;
   border-radius: 5px;
+
+  &:disabled {
+    background-color: #ccc;
+  }
 }
 
 .input {

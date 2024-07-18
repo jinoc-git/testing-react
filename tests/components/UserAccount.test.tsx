@@ -17,7 +17,7 @@ describe('UserAccount', () => {
     render(<UserAccount user={user} />);
 
     const button = screen.getByRole('button'); // 버튼 태그들 찾아서
-    expect(button).toBeInTheDocument(); // document에 있는지
+    // expect(button).toBeInTheDocument(); getByRole을 사용하기에 주석
     expect(button).toHaveTextContent(/edit/i); // 버튼에 edit이란 글자가 있는지
   });
 

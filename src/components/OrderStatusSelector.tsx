@@ -1,4 +1,4 @@
-import { Select } from "@radix-ui/themes";
+import { Select } from '@radix-ui/themes';
 
 interface Props {
   onChange: (status: string) => void;

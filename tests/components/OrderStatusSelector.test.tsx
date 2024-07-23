@@ -44,7 +44,7 @@ describe('OrderStatusSelector', () => {
   // 다른 변수로 동일한 테스트를 진행해야 할 때 사용
   it.each([
     { label: /processed/i, value: 'processed' }, // option의 label과 value
-    { label: /fulfulled/i, value: 'fulfilled' }, // option의 label과 value
+    { label: /fulfilled/i, value: 'fulfilled' }, // option의 label과 value
   ])(
     'should call onChange with $value when the $label option is selected',
     async ({ label, value }) => {

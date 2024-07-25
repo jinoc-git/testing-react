@@ -1,18 +1,34 @@
 import { render, screen } from '@testing-library/react';
 import ProductDetail from '../../src/components/ProductDetail';
-import { products } from '../mocks/data';
 import { server } from '../mocks/server';
 import { http, HttpResponse } from 'msw';
+import { db } from '../mocks/db';
 
 describe('ProductDetail', () => {
-  it('should render the list of products', async () => {
-    render(<ProductDetail productId={1} />);
+  let productId: number; // 생성할 product의 id를 할당할 변수
 
-    const productName = await screen.findByText(new RegExp(products[0].name)); // 상품 이름 찾아서
+  beforeAll(() => {
+    const product = db.product.create(); // 상품 생성
+    productId = product.id; // 생성한 productId를 변수에 할당
+  });
+
+  afterAll(() => {
+    db.product.delete({ where: { id: { equals: productId } } }); // 테스트 끝난 후 상품 데이터 삭제
+  });
+
+  it('should render the list of products', async () => {
+    // 할당한 productId와 일치하는 상품을 db에서 찾고
+    const product = db.product.findFirst({
+      where: { id: { equals: productId } },
+    });
+
+    render(<ProductDetail productId={productId} />); // 할당한 productId를 props로 전달
+
+    const productName = await screen.findByText(new RegExp(product!.name)); // 상품 이름 찾아서, (생성한 productId를 저장했으니 ! 사용)
     expect(productName).toBeInTheDocument(); // 렌더링되는지
     const productPrice = await screen.findByText(
-      new RegExp(products[0].price.toString())
-    ); // 상품 가격 찾아서
+      new RegExp(product!.price.toString())
+    ); // 상품 가격 찾아서 (생성한 productId를 저장했으니 ! 사용)
     expect(productPrice).toBeInTheDocument(); // 렌더링 되는지
   });
 
@@ -30,5 +46,14 @@ describe('ProductDetail', () => {
 
     const message = await screen.findByText(/invalid/i); // invalid 텍스트를 찾아서
     expect(message).toBeInTheDocument(); // 렌더링 되는지 확인
+  });
+
+  // data fetching이 실패했을 때
+  it('should render an error if data fetching fails', async () => {
+    server.use(http.get('/products/1', () => HttpResponse.error())); // 에러를 전달
+
+    render(<ProductDetail productId={1} />);
+
+    expect(await screen.findByText(/error/i)).toBeInTheDocument();
   });
 });

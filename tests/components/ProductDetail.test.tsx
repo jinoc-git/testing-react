@@ -7,6 +7,7 @@ import ProductDetail from '../../src/components/ProductDetail';
 import { server } from '../mocks/server';
 import { delay, http, HttpResponse } from 'msw';
 import { db } from '../mocks/db';
+import AllProviders from '../AllProviders';
 
 describe('ProductDetail', () => {
   let productId: number; // 생성할 product의 id를 할당할 변수
@@ -26,7 +27,7 @@ describe('ProductDetail', () => {
       where: { id: { equals: productId } },
     });
 
-    render(<ProductDetail productId={productId} />); // 할당한 productId를 props로 전달
+    render(<ProductDetail productId={productId} />, { wrapper: AllProviders }); // 할당한 productId를 props로 전달
 
     const productName = await screen.findByText(new RegExp(product!.name)); // 상품 이름 찾아서, (생성한 productId를 저장했으니 ! 사용)
     expect(productName).toBeInTheDocument(); // 렌더링되는지
@@ -39,14 +40,14 @@ describe('ProductDetail', () => {
   it('should render message if product not found', async () => {
     server.use(http.get('/products/1', () => HttpResponse.json(null))); // 상품을 찾지 못했을 때
 
-    render(<ProductDetail productId={1} />);
+    render(<ProductDetail productId={1} />, { wrapper: AllProviders });
 
     const message = await screen.findByText(/not found/i); // 상품이 없을 때 렌더링되는 텍스트를 찾고
     expect(message).toBeInTheDocument(); // 렌더링 되는지
   });
 
   it('should render an error for invalid productId', async () => {
-    render(<ProductDetail productId={0} />); // 0은 useEffect의 첫 if문에서 걸려서 Invalid ProductId 렌더
+    render(<ProductDetail productId={0} />, { wrapper: AllProviders }); // 0은 useEffect의 첫 if문에서 걸려서 Invalid ProductId 렌더
 
     const message = await screen.findByText(/invalid/i); // invalid 텍스트를 찾아서
     expect(message).toBeInTheDocument(); // 렌더링 되는지 확인
@@ -56,7 +57,7 @@ describe('ProductDetail', () => {
   it('should render an error if data fetching fails', async () => {
     server.use(http.get('/products/1', () => HttpResponse.error())); // 에러를 전달
 
-    render(<ProductDetail productId={1} />);
+    render(<ProductDetail productId={1} />, { wrapper: AllProviders });
 
     expect(await screen.findByText(/error/i)).toBeInTheDocument();
   });
@@ -69,7 +70,7 @@ describe('ProductDetail', () => {
       })
     );
 
-    render(<ProductDetail productId={1} />);
+    render(<ProductDetail productId={1} />, { wrapper: AllProviders });
 
     expect(await screen.findByText(/loading/i)).toBeInTheDocument();
   });
@@ -77,7 +78,7 @@ describe('ProductDetail', () => {
   it('should remove the loading indicator if data fetching fails', async () => {
     server.use(http.get('/product/1', () => HttpResponse.error()));
 
-    render(<ProductDetail productId={1} />);
+    render(<ProductDetail productId={1} />, { wrapper: AllProviders });
 
     await waitForElementToBeRemoved(() => screen.getByText(/loading/i));
   });

@@ -72,4 +72,28 @@ describe('BrowseProductsPage', () => {
       screen.queryByRole('progressbar', { name: /products/i })
     );
   });
+
+  it('should not render an error if categories cannot be fetched', async () => {
+    server.use(http.get('/categories', () => HttpResponse.error()));
+
+    renderComponent();
+
+    // loading indicator가 사라진 뒤
+    await waitForElementToBeRemoved(() =>
+      screen.queryByRole('progressbar', { name: /products/i })
+    );
+
+    expect(screen.queryByText(/error/i)).not.toBeInTheDocument(); // error란 텍스트가 없고
+    expect(
+      screen.queryByRole('combobox', { name: /category/i })
+    ).not.toBeInTheDocument(); // select가 없는지
+  });
+
+  it('should render an error if products cannot be fetched', async () => {
+    server.use(http.get('/products', () => HttpResponse.error()));
+
+    renderComponent();
+
+    expect(await screen.findByText(/error/i)).toBeInTheDocument(); // error란 텍스트가 있는지
+  });
 });

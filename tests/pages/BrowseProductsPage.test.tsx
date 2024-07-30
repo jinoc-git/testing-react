@@ -6,7 +6,7 @@ import {
 import BrowseProducts from '../../src/pages/BrowseProductsPage';
 import { Theme } from '@radix-ui/themes';
 import { Category, Product } from '../../src/entities';
-import { db } from '../mocks/db';
+import { db, getProductsByCategory } from '../mocks/db';
 import { CartProvider } from '../../src/providers/CartProvider';
 import userEvent from '@testing-library/user-event';
 import { simulateDelay, simulateError } from '../utils';
@@ -37,28 +37,6 @@ describe('BrowseProductsPage', () => {
     // db product에 categoryIds에 있는 id와 일치하는 것들을 삭제
     db.product.deleteMany({ where: { id: { in: productIds } } });
   });
-
-  const renderComponent = () => {
-    render(
-      <CartProvider>
-        <Theme>
-          <BrowseProducts />
-        </Theme>
-      </CartProvider>
-    );
-
-    return {
-      getProductsSkeleton: () =>
-        screen.queryByRole('progressbar', { name: /products/i }),
-
-      getCategoriesSkeleton: () =>
-        screen.queryByRole('progressbar', {
-          name: /categories/i,
-        }),
-
-      getCategoriesComboBox: () => screen.queryByRole('combobox'),
-    };
-  };
 
   it('should show a loading skeleton when fetching categories', () => {
     simulateDelay('/categories');
@@ -150,57 +128,77 @@ describe('BrowseProductsPage', () => {
   });
 
   it('should filter products by category', async () => {
-    const { getCategoriesSkeleton, getCategoriesComboBox } = renderComponent();
+    const { selectCategory, expectProductsToBeInTheDocument } =
+      renderComponent();
 
-    // arrange
-    // 로딩이 끝나고 유저가 select button을 클릭했을 때
-    await waitForElementToBeRemoved(getCategoriesSkeleton);
-    const combobox = getCategoriesComboBox();
-    const user = userEvent.setup();
-    await user.click(combobox!);
-
-    // act
-    // 생성한 첫 번째 카테고리를 클릭하면
+    // 생성한 첫 번째 카테고리를 클릭
     const selectedCategory = categories[0];
-    const option = screen.getByRole('option', { name: selectedCategory.name });
-    await user.click(option);
+    await selectCategory(selectedCategory.name);
 
-    // assert
-    // 생성한 상품들 중 첫 번째 카테고리id와 일치하는 상품들을 db에서 찾아서
-    const products = db.product.findMany({
-      where: { categoryId: { equals: selectedCategory.id } },
-    });
-    const rows = screen.getAllByRole('row'); // table row들을 찾고 (tr태그)
-    const dataRows = rows.slice(1); // table header를 제외한 실제 data가 있는 row들
-    expect(dataRows).toHaveLength(products.length); // 생성한 상품 개수와 일치하는지 확인
-
-    products.forEach((product) => {
-      // 생성한 상품들이 화면에 잘 렌더링 되는지 확인
-      expect(screen.getByText(product.name)).toBeInTheDocument();
-    });
+    // 생성한 상품들 중 첫 번째 카테고리id와 일치하는 상품들을 db에서 찾아서 렌더링 되는지 확인
+    const products = getProductsByCategory(selectedCategory.id);
+    expectProductsToBeInTheDocument(products);
   });
 
   it('should render all products if All category is selected', async () => {
-    const { getCategoriesSkeleton, getCategoriesComboBox } = renderComponent();
+    const { selectCategory, expectProductsToBeInTheDocument } =
+      renderComponent();
 
-    // arrange
-    await waitForElementToBeRemoved(getCategoriesSkeleton);
-    const combobox = getCategoriesComboBox();
-    const user = userEvent.setup();
-    await user.click(combobox!);
+    await selectCategory(/all/i);
 
-    // act
-    const option = screen.getByRole('option', { name: /all/i }); // all 선택했을 떄
-    await user.click(option);
-
-    // assert
     const products = db.product.getAll();
-    const rows = screen.getAllByRole('row');
-    const dataRows = rows.slice(1);
-    expect(dataRows).toHaveLength(products.length);
-
-    products.forEach((product) => {
-      expect(screen.getByText(product.name)).toBeInTheDocument();
-    });
+    expectProductsToBeInTheDocument(products);
   });
+
+  const renderComponent = () => {
+    render(
+      <CartProvider>
+        <Theme>
+          <BrowseProducts />
+        </Theme>
+      </CartProvider>
+    );
+
+    const getCategoriesSkeleton = () => {
+      return screen.queryByRole('progressbar', {
+        name: /categories/i,
+      });
+    };
+
+    const getProductsSkeleton = () => {
+      return screen.queryByRole('progressbar', { name: /products/i });
+    };
+
+    const getCategoriesComboBox = () => screen.queryByRole('combobox');
+
+    const selectCategory = async (name: RegExp | string) => {
+      // 로딩이 끝나고 유저가 select button을 클릭했을 때
+      await waitForElementToBeRemoved(getCategoriesSkeleton);
+      const combobox = getCategoriesComboBox();
+      const user = userEvent.setup();
+      await user.click(combobox!);
+
+      // 인자로 들어온 category를 클릭
+      const option = screen.getByRole('option', { name });
+      await user.click(option);
+    };
+
+    const expectProductsToBeInTheDocument = (products: Product[]) => {
+      const rows = screen.getAllByRole('row'); // table row들을 찾고 (tr태그)
+      const dataRows = rows.slice(1); // tabel header를 제외한 실제 data가 있는 row들
+      expect(dataRows).toHaveLength(products.length); // 생성한 상품 개수와 일치하는지 확인
+
+      products.forEach((product) => {
+        expect(screen.getByText(product.name)).toBeInTheDocument();
+      });
+    };
+
+    return {
+      getCategoriesSkeleton,
+      getProductsSkeleton,
+      getCategoriesComboBox,
+      selectCategory,
+      expectProductsToBeInTheDocument,
+    };
+  };
 });

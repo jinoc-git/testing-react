@@ -15,11 +15,14 @@ describe('BrowseProductsPage', () => {
   const categories: Category[] = [];
   const products: Product[] = [];
 
-  // 카테고리와 상품을 2개씩 생성
+  // 2개의 카테고리와 각 카테고리에 2개씩 상품 생성
   beforeAll(() => {
     [1, 2].forEach(() => {
-      categories.push(db.category.create());
-      products.push(db.product.create());
+      const category = db.category.create();
+      categories.push(category);
+      [1, 2].forEach(() => {
+        products.push(db.product.create({ categoryId: category.id }));
+      });
     });
   });
 
@@ -143,6 +146,61 @@ describe('BrowseProductsPage', () => {
 
     products.forEach((product) => {
       expect(screen.getByText(product.name)).toBeInTheDocument(); // 상품이 렌더링되는지 확인
+    });
+  });
+
+  it('should filter products by category', async () => {
+    const { getCategoriesSkeleton, getCategoriesComboBox } = renderComponent();
+
+    // arrange
+    // 로딩이 끝나고 유저가 select button을 클릭했을 때
+    await waitForElementToBeRemoved(getCategoriesSkeleton);
+    const combobox = getCategoriesComboBox();
+    const user = userEvent.setup();
+    await user.click(combobox!);
+
+    // act
+    // 생성한 첫 번째 카테고리를 클릭하면
+    const selectedCategory = categories[0];
+    const option = screen.getByRole('option', { name: selectedCategory.name });
+    await user.click(option);
+
+    // assert
+    // 생성한 상품들 중 첫 번째 카테고리id와 일치하는 상품들을 db에서 찾아서
+    const products = db.product.findMany({
+      where: { categoryId: { equals: selectedCategory.id } },
+    });
+    const rows = screen.getAllByRole('row'); // table row들을 찾고 (tr태그)
+    const dataRows = rows.slice(1); // table header를 제외한 실제 data가 있는 row들
+    expect(dataRows).toHaveLength(products.length); // 생성한 상품 개수와 일치하는지 확인
+
+    products.forEach((product) => {
+      // 생성한 상품들이 화면에 잘 렌더링 되는지 확인
+      expect(screen.getByText(product.name)).toBeInTheDocument();
+    });
+  });
+
+  it('should render all products if All category is selected', async () => {
+    const { getCategoriesSkeleton, getCategoriesComboBox } = renderComponent();
+
+    // arrange
+    await waitForElementToBeRemoved(getCategoriesSkeleton);
+    const combobox = getCategoriesComboBox();
+    const user = userEvent.setup();
+    await user.click(combobox!);
+
+    // act
+    const option = screen.getByRole('option', { name: /all/i }); // all 선택했을 떄
+    await user.click(option);
+
+    // assert
+    const products = db.product.getAll();
+    const rows = screen.getAllByRole('row');
+    const dataRows = rows.slice(1);
+    expect(dataRows).toHaveLength(products.length);
+
+    products.forEach((product) => {
+      expect(screen.getByText(product.name)).toBeInTheDocument();
     });
   });
 });

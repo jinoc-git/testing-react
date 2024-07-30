@@ -112,12 +112,14 @@ describe('BrowseProductsPage', () => {
   it('should render categories', async () => {
     const { getCategoriesSkeleton, getCategoriesComboBox } = renderComponent();
 
-    await waitForElementToBeRemoved(getCategoriesSkeleton);
-
     // getByRole을 즉시 찾지만 findByRole은 비동기적으로 요소를 찾음
     // (동적으로 생성되거나 비동기적으로 로딩되는 요소 찾을 때 씀)
     // 시간이 지나도 요소를 찾지 못하면 TimeoutError를 발생
     // const combobox = await screen.findByRole('combobox');
+
+    // findByRole 대신 사용 (로딩이 끝난 후)
+    await waitForElementToBeRemoved(getCategoriesSkeleton);
+
     const combobox = getCategoriesComboBox();
     expect(combobox).toBeInTheDocument();
 

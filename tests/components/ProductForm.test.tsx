@@ -21,8 +21,9 @@ describe('ProductForm', () => {
     });
 
     return {
-      waitForFormToLoad: () => screen.findByRole('form'), // promise를 반환하기에 async가 없어도 await 사용 가능
-      getInputs: () => {
+      waitForFormToLoad: async () => {
+        await screen.findByRole('form');
+
         return {
           // getByPlaceholderText대신 getByRole, getByLabelText, getByTestId도 가능하다
           // (getByTestId는 요소에 data-testid 속성을 추가해야한다)
@@ -37,11 +38,9 @@ describe('ProductForm', () => {
   };
 
   it('should render form fields', async () => {
-    const { waitForFormToLoad, getInputs } = renderComponent();
+    const { waitForFormToLoad } = renderComponent();
 
-    await waitForFormToLoad();
-
-    const { nameInput, priceInput, categoryInput } = getInputs();
+    const { nameInput, priceInput, categoryInput } = await waitForFormToLoad();
 
     expect(nameInput).toBeInTheDocument();
     expect(priceInput).toBeInTheDocument();
@@ -56,14 +55,19 @@ describe('ProductForm', () => {
       categoryId: category.id,
     };
 
-    const { waitForFormToLoad, getInputs } = renderComponent(product);
+    const { waitForFormToLoad } = renderComponent(product);
 
-    await waitForFormToLoad();
-
-    const { nameInput, priceInput, categoryInput } = getInputs();
+    const { nameInput, priceInput, categoryInput } = await waitForFormToLoad();
 
     expect(nameInput).toHaveValue(product.name); // default value가 product.name이 맞는지 확인
     expect(priceInput).toHaveValue(product.price.toString()); // default value가 product.price가 맞는지 확인
     expect(categoryInput).toHaveTextContent(category.name); // select의 default value는 props로 전달된 상품의 categoryId이기 때문에 text는 category.name이다
+  });
+
+  it('should put focus on the name field', async () => {
+    const { waitForFormToLoad } = renderComponent();
+
+    const { nameInput } = await waitForFormToLoad();
+    expect(nameInput).toHaveFocus(); // autoFocus가 잘 되는지 확인
   });
 });

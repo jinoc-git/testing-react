@@ -4,10 +4,8 @@ import {
   waitForElementToBeRemoved,
 } from '@testing-library/react';
 import BrowseProducts from '../../src/pages/BrowseProductsPage';
-import { Theme } from '@radix-ui/themes';
 import { Category, Product } from '../../src/entities';
 import { db, getProductsByCategory } from '../mocks/db';
-import { CartProvider } from '../../src/providers/CartProvider';
 import userEvent from '@testing-library/user-event';
 import { simulateDelay, simulateError } from '../utils';
 import AllProviders from '../AllProviders';

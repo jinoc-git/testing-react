@@ -1,15 +1,15 @@
-import { zodResolver } from "@hookform/resolvers/zod";
-import { Box, Button, Select, TextField } from "@radix-ui/themes";
-import { useState } from "react";
-import { Controller, useForm } from "react-hook-form";
-import toast from "react-hot-toast";
-import { Product } from "../entities";
-import useCategories from "../hooks/useCategories";
+import { zodResolver } from '@hookform/resolvers/zod';
+import { Box, Button, Select, TextField } from '@radix-ui/themes';
+import { useState } from 'react';
+import { Controller, useForm } from 'react-hook-form';
+import toast from 'react-hot-toast';
+import { Product } from '../entities';
+import useCategories from '../hooks/useCategories';
 import {
   ProductFormData,
   productFormSchema,
-} from "../validationSchemas/productSchema";
-import ErrorMessage from "./ErrorMessage";
+} from '../validationSchemas/productSchema';
+import ErrorMessage from './ErrorMessage';
 
 interface Props {
   product?: Product;
@@ -40,16 +40,15 @@ const ProductForm = ({ product, onSubmit }: Props) => {
           setSubmitting(true);
           await onSubmit(formData);
         } catch (error) {
-          toast.error("An unexpected error occurred");
+          toast.error('An unexpected error occurred');
         } finally {
           setSubmitting(false);
         }
       })}
-      className="space-y-3"
-    >
+      className="space-y-3">
       <Box>
         <TextField.Root className="max-w-sm">
-          <TextField.Input placeholder="Name" {...register("name")} size="3" />
+          <TextField.Input placeholder="Name" {...register('name')} size="3" />
         </TextField.Root>
         <ErrorMessage error={errors.name} />
       </Box>
@@ -60,7 +59,7 @@ const ProductForm = ({ product, onSubmit }: Props) => {
             placeholder="Price"
             maxLength={5}
             size="3"
-            {...register("price", { valueAsNumber: true })}
+            {...register('price', { valueAsNumber: true })}
           />
         </TextField.Root>
         <ErrorMessage error={errors.price} />
@@ -72,17 +71,15 @@ const ProductForm = ({ product, onSubmit }: Props) => {
           render={({ field }) => (
             <Select.Root
               size="3"
-              defaultValue={product?.categoryId.toString() || ""}
-              onValueChange={(value) => field.onChange(+value)}
-            >
-              <Select.Trigger placeholder="Category" />
+              defaultValue={product?.categoryId.toString() || ''}
+              onValueChange={(value) => field.onChange(+value)}>
+              <Select.Trigger aria-label="Category" />
               <Select.Content>
                 <Select.Group>
                   {categories?.map((category) => (
                     <Select.Item
                       key={category.id}
-                      value={category.id.toString()}
-                    >
+                      value={category.id.toString()}>
                       {category.name}
                     </Select.Item>
                   ))}

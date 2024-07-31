@@ -15,18 +15,37 @@ describe('ProductForm', () => {
     db.category.delete({ where: { id: { equals: category.id } } });
   });
 
+  const renderComponent = (product?: Product) => {
+    render(<ProductForm product={product} onSubmit={vi.fn()} />, {
+      wrapper: AllProviders,
+    });
+
+    return {
+      waitForFormToLoad: () => screen.findByRole('form'), // promise를 반환하기에 async가 없어도 await 사용 가능
+      getInputs: () => {
+        return {
+          // getByPlaceholderText대신 getByRole, getByLabelText, getByTestId도 가능하다
+          // (getByTestId는 요소에 data-testid 속성을 추가해야한다)
+          nameInput: screen.getByPlaceholderText(/name/i), // name이란 placeholder를 갖은 요소 찾기
+          priceInput: screen.getByPlaceholderText(/price/i), // price란 placeholder를 갖은 요소 찾기
+          categoryInput: screen.getByRole('combobox', {
+            name: /category/i,
+          }), // category 선택 select 찾기
+        };
+      },
+    };
+  };
+
   it('should render form fields', async () => {
-    render(<ProductForm onSubmit={vi.fn()} />, { wrapper: AllProviders });
+    const { waitForFormToLoad, getInputs } = renderComponent();
 
-    await screen.findByRole('form');
+    await waitForFormToLoad();
 
-    // getByPlaceholderText대신 getByRole, getByLabelText, getByTestId도 가능하다
-    // (getByTestId는 요소에 data-testid 속성을 추가해야한다)
-    expect(screen.getByPlaceholderText(/name/i)).toBeInTheDocument(); // name이란 placeholder를 갖은 요소 찾기
-    expect(screen.getByPlaceholderText(/price/i)).toBeInTheDocument(); // price란 placeholder를 갖은 요소 찾기
-    expect(
-      screen.getByRole('combobox', { name: /category/i })
-    ).toBeInTheDocument(); // category 선택 select 확인
+    const { nameInput, priceInput, categoryInput } = getInputs();
+
+    expect(nameInput).toBeInTheDocument();
+    expect(priceInput).toBeInTheDocument();
+    expect(categoryInput).toBeInTheDocument();
   });
 
   it('should populate form fields when editing a product', async () => {
@@ -37,23 +56,14 @@ describe('ProductForm', () => {
       categoryId: category.id,
     };
 
-    render(<ProductForm product={product} onSubmit={vi.fn()} />, {
-      wrapper: AllProviders,
-    });
+    const { waitForFormToLoad, getInputs } = renderComponent(product);
 
-    await screen.findByRole('form');
+    await waitForFormToLoad();
 
-    // default value가 product.name이 맞는지 확인
-    expect(screen.getByPlaceholderText(/name/i)).toHaveValue(product.name);
+    const { nameInput, priceInput, categoryInput } = getInputs();
 
-    // default value가 product.price가 맞는지 확인
-    expect(screen.getByPlaceholderText(/price/i)).toHaveValue(
-      product.price.toString()
-    );
-
-    // select의 default value는 props로 전달된 상품의 categoryId이기 때문에 text는 category.name이다
-    expect(
-      screen.getByRole('combobox', { name: /category/i })
-    ).toHaveTextContent(category.name);
+    expect(nameInput).toHaveValue(product.name); // default value가 product.name이 맞는지 확인
+    expect(priceInput).toHaveValue(product.price.toString()); // default value가 product.price가 맞는지 확인
+    expect(categoryInput).toHaveTextContent(category.name); // select의 default value는 props로 전달된 상품의 categoryId이기 때문에 text는 category.name이다
   });
 });

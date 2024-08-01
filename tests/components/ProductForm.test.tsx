@@ -96,7 +96,36 @@ describe('ProductForm', () => {
 
       const errer = screen.getByRole('alert'); // 에러 메시지 div의 role은 alert임
       expect(errer).toBeInTheDocument(); // 에러 메시지가 렌더링 되는지
-      expect(errer).toHaveTextContent(errorMessage); // 에러 메시지가 errorMessage 텍스트를 포함하는지 (인자로 받은)
+      expect(errer).toHaveTextContent(errorMessage); // 에러 메시지가 인자로 받은 errorMessage 텍스트를 포함하는지
+    }
+  );
+
+  it.each([
+    { scenario: 'missing', errorMessage: /required/i }, // price input이 빈 값일 때
+    { scenario: '0', price: 0, errorMessage: /1/i }, // price input의 값이 0일 때
+    { scenario: 'negative', price: -1, errorMessage: /1/i }, // price input의 값이 음수일 때
+    { scenario: 'greater than 1000', price: 1001, errorMessage: /1000/i }, // price input의 값이 1000보다 클 때
+    { scenario: 'not a number', price: 'a', errorMessage: /required/i }, // price input의 값이 숫자가 아닐 때
+  ])(
+    'should display an error if price is $scenario',
+    async ({ price, errorMessage }) => {
+      const { waitForFormToLoad } = renderComponent();
+
+      const form = await waitForFormToLoad();
+      const user = userEvent.setup();
+      await user.type(form.nameInput, 'a'); // name input은 필수 값이라 입력
+      // price input이 빈 값인 테스트 케이스도 있기 때문
+      if (price !== undefined) {
+        await user.type(form.priceInput, price.toString());
+      }
+      await user.click(form.categoryInput); // category select button을 클릭
+      const options = screen.getAllByRole('option'); // select options들
+      await user.click(options[0]); // 첫 번째 카테고리 선택
+      await user.click(form.submitButton); // submit 버튼 클릭
+
+      const error = screen.getByRole('alert');
+      expect(error).toBeInTheDocument();
+      expect(error).toHaveTextContent(errorMessage); // 에러 메시지가 인자로 받은 errorMessage 텍스트를 포함하는지
     }
   );
 });

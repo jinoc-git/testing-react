@@ -3,6 +3,7 @@ import ProductForm from '../../src/components/ProductForm';
 import AllProviders from '../AllProviders';
 import { Category, Product } from '../../src/entities';
 import { db } from '../mocks/db';
+import userEvent from '@testing-library/user-event';
 
 describe('ProductForm', () => {
   let category: Category;
@@ -32,6 +33,7 @@ describe('ProductForm', () => {
           categoryInput: screen.getByRole('combobox', {
             name: /category/i,
           }), // category 선택 select 찾기
+          submitButton: screen.getByRole('button'),
         };
       },
     };
@@ -69,5 +71,21 @@ describe('ProductForm', () => {
 
     const { nameInput } = await waitForFormToLoad();
     expect(nameInput).toHaveFocus(); // autoFocus가 잘 되는지 확인
+  });
+
+  it('should display an error if name is missing', async () => {
+    const { waitForFormToLoad } = renderComponent();
+
+    const form = await waitForFormToLoad();
+    const user = userEvent.setup();
+    await user.type(form.priceInput, '10'); // price input에 10을 입력하고
+    await user.click(form.categoryInput); // category select button을 클릭
+    const options = screen.getAllByRole('option'); // select options들
+    await user.click(options[0]); // 첫 번째 카테고리 선택
+    await user.click(form.submitButton); // submit 버튼 클릭
+
+    const errer = screen.getByRole('alert'); // name은 필수 값이라 error 메시지가 표시 (에러 메시지 div의 role은 alert)
+    expect(errer).toBeInTheDocument(); // 에러 메시지가 렌더링 되는지
+    expect(errer).toHaveTextContent(/required/i); // 에러 메시지가 required 텍스트를 포함하는지
   });
 });

@@ -22,18 +22,55 @@ describe('ProductForm', () => {
     });
 
     return {
+      expectErrorToBeInTheDocument: (errorMessage: RegExp) => {
+        const error = screen.getByRole('alert'); // 에러 메시지 div의 role은 alert임
+        expect(error).toBeInTheDocument(); // 에러 메시지가 렌더링 되는지
+        expect(error).toHaveTextContent(errorMessage); // 에러 메시지가 인자로 받은 errorMessage 텍스트를 포함하는지
+      },
       waitForFormToLoad: async () => {
         await screen.findByRole('form');
 
+        // getByPlaceholderText대신 getByRole, getByLabelText, getByTestId도 가능하다
+        // (getByTestId는 요소에 data-testid 속성을 추가해야한다)
+        const nameInput = screen.getByPlaceholderText(/name/i); // name이란 placeholder를 갖은 요소 찾기
+        const priceInput = screen.getByPlaceholderText(/price/i); // price란 placeholder를 갖은 요소 찾기
+        const categoryInput = screen.getByRole('combobox', {
+          name: /category/i,
+        }); // category 선택 select 찾기
+        const submitButton = screen.getByRole('button');
+
+        type FormData = { [K in keyof Product]: any };
+
+        const validData = {
+          id: 1,
+          name: 'a',
+          price: 1,
+          categoryId: 1,
+        };
+
+        // test에서 input의 값을 채워주는 함수
+        const fill = async (product: FormData) => {
+          const user = userEvent.setup();
+          if (product.name !== undefined) {
+            await user.type(nameInput, product.name); // name input이 빈 값이 아닐 때를 제외하고 input에 값을 넣음
+          }
+          if (product.price !== undefined) {
+            await user.type(priceInput, product.price.toString()); // price input이 빈 값일 때를 제외하고 input에 값을 넣음
+          }
+
+          await user.click(categoryInput); // 카테고리 버튼 클릭
+          const options = screen.getAllByRole('option');
+          await user.click(options[0]); // 첫 번째 카테고리 선택
+          await user.click(submitButton); // submit 버튼 클릭
+        };
+
         return {
-          // getByPlaceholderText대신 getByRole, getByLabelText, getByTestId도 가능하다
-          // (getByTestId는 요소에 data-testid 속성을 추가해야한다)
-          nameInput: screen.getByPlaceholderText(/name/i), // name이란 placeholder를 갖은 요소 찾기
-          priceInput: screen.getByPlaceholderText(/price/i), // price란 placeholder를 갖은 요소 찾기
-          categoryInput: screen.getByRole('combobox', {
-            name: /category/i,
-          }), // category 선택 select 찾기
-          submitButton: screen.getByRole('button'),
+          nameInput,
+          priceInput,
+          categoryInput,
+          submitButton,
+          validData,
+          fill,
         };
       },
     };
@@ -83,20 +120,14 @@ describe('ProductForm', () => {
   ])(
     'should display an error if name is $scenario', // name input의 validation 체크 (min1, max255)
     async ({ name, errorMessage }) => {
-      const { waitForFormToLoad } = renderComponent();
+      const { waitForFormToLoad, expectErrorToBeInTheDocument } =
+        renderComponent();
 
       const form = await waitForFormToLoad();
-      const user = userEvent.setup();
-      if (name !== undefined) await user.type(form.nameInput, name); // name input에 값이 있을 때 (255 글자 초과인 케이스일 때)
-      await user.type(form.priceInput, '10'); // price input에 10을 입력하고
-      await user.click(form.categoryInput); // category select button을 클릭
-      const options = screen.getAllByRole('option'); // select options들
-      await user.click(options[0]); // 첫 번째 카테고리 선택
-      await user.click(form.submitButton); // submit 버튼 클릭
 
-      const errer = screen.getByRole('alert'); // 에러 메시지 div의 role은 alert임
-      expect(errer).toBeInTheDocument(); // 에러 메시지가 렌더링 되는지
-      expect(errer).toHaveTextContent(errorMessage); // 에러 메시지가 인자로 받은 errorMessage 텍스트를 포함하는지
+      await form.fill({ ...form.validData, name });
+
+      expectErrorToBeInTheDocument(errorMessage);
     }
   );
 
@@ -109,23 +140,14 @@ describe('ProductForm', () => {
   ])(
     'should display an error if price is $scenario',
     async ({ price, errorMessage }) => {
-      const { waitForFormToLoad } = renderComponent();
+      const { waitForFormToLoad, expectErrorToBeInTheDocument } =
+        renderComponent();
 
       const form = await waitForFormToLoad();
-      const user = userEvent.setup();
-      await user.type(form.nameInput, 'a'); // name input은 필수 값이라 입력
-      // price input이 빈 값인 테스트 케이스도 있기 때문
-      if (price !== undefined) {
-        await user.type(form.priceInput, price.toString());
-      }
-      await user.click(form.categoryInput); // category select button을 클릭
-      const options = screen.getAllByRole('option'); // select options들
-      await user.click(options[0]); // 첫 번째 카테고리 선택
-      await user.click(form.submitButton); // submit 버튼 클릭
 
-      const error = screen.getByRole('alert');
-      expect(error).toBeInTheDocument();
-      expect(error).toHaveTextContent(errorMessage); // 에러 메시지가 인자로 받은 errorMessage 텍스트를 포함하는지
+      await form.fill({ ...form.validData, price });
+
+      expectErrorToBeInTheDocument(errorMessage);
     }
   );
 });

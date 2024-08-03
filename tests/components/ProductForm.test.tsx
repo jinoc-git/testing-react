@@ -4,6 +4,7 @@ import AllProviders from '../AllProviders';
 import { Category, Product } from '../../src/entities';
 import { db } from '../mocks/db';
 import userEvent from '@testing-library/user-event';
+import { Toaster } from 'react-hot-toast';
 
 describe('ProductForm', () => {
   let category: Category;
@@ -17,11 +18,19 @@ describe('ProductForm', () => {
   });
 
   const renderComponent = (product?: Product) => {
-    render(<ProductForm product={product} onSubmit={vi.fn()} />, {
-      wrapper: AllProviders,
-    });
+    const onSubmit = vi.fn();
+    render(
+      <>
+        <ProductForm product={product} onSubmit={onSubmit} />
+        <Toaster />
+      </>,
+      {
+        wrapper: AllProviders,
+      }
+    );
 
     return {
+      onSubmit,
       expectErrorToBeInTheDocument: (errorMessage: RegExp) => {
         const error = screen.getByRole('alert'); // 에러 메시지 div의 role은 alert임
         expect(error).toBeInTheDocument(); // 에러 메시지가 렌더링 되는지
@@ -45,7 +54,7 @@ describe('ProductForm', () => {
           id: 1,
           name: 'a',
           price: 1,
-          categoryId: 1,
+          categoryId: category.id,
         };
 
         // test에서 input의 값을 채워주는 함수
@@ -58,6 +67,7 @@ describe('ProductForm', () => {
             await user.type(priceInput, product.price.toString()); // price input이 빈 값일 때를 제외하고 input에 값을 넣음
           }
 
+          await user.tab(); // 사용자의 ui 상호 작용을 정확하게 하기 위하여 추가
           await user.click(categoryInput); // 카테고리 버튼 클릭
           const options = screen.getAllByRole('option');
           await user.click(options[0]); // 첫 번째 카테고리 선택
@@ -150,4 +160,26 @@ describe('ProductForm', () => {
       expectErrorToBeInTheDocument(errorMessage);
     }
   );
+
+  it('should call onSubmit with the correct data', async () => {
+    const { waitForFormToLoad, onSubmit } = renderComponent();
+
+    const form = await waitForFormToLoad();
+    await form.fill(form.validData);
+
+    const { id, ...formData } = form.validData;
+    expect(onSubmit).toHaveBeenCalledWith(formData); // onSubmit 함수가 validData를 인자로 받는지 확인 (잘 전달되는지)
+  });
+
+  it('should display a toast if submission fails', async () => {
+    const { waitForFormToLoad, onSubmit } = renderComponent();
+    onSubmit.mockRejectedValue({}); // onSubmit함수가 빈 객체를 반환하며 reject하도록 mocking (테스트코드에서 호출됐을 때)
+
+    const form = await waitForFormToLoad();
+    await form.fill(form.validData);
+
+    const toast = await screen.findByRole('status'); // toast의 role은 status
+    expect(toast).toBeInTheDocument();
+    expect(toast).toHaveTextContent(/error/i);
+  });
 });

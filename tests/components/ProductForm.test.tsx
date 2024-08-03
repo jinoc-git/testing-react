@@ -182,4 +182,24 @@ describe('ProductForm', () => {
     expect(toast).toBeInTheDocument();
     expect(toast).toHaveTextContent(/error/i);
   });
+
+  it('should disable the submit button upon submission', async () => {
+    const { waitForFormToLoad, onSubmit } = renderComponent();
+    onSubmit.mockReturnValue(new Promise(() => {})); // 빈 객체를 반환하는 promise는 resolve, reject되지 않은 상태 (submitting)
+
+    const form = await waitForFormToLoad();
+    await form.fill(form.validData);
+
+    expect(form.submitButton).toBeDisabled(); // 제출중일 때 disable되는지 확인
+  });
+
+  it('should re-enable the submit button after submission', async () => {
+    const { waitForFormToLoad, onSubmit } = renderComponent();
+    onSubmit.mockResolvedValue({}); // submit 성공 시
+
+    const form = await waitForFormToLoad();
+    await form.fill(form.validData);
+
+    expect(form.submitButton).not.toBeDisabled(); // disable가 아닌지 확인
+  });
 });

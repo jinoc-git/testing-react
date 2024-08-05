@@ -19,18 +19,41 @@ describe('QuantitySelector', () => {
       </CartProvider>
     );
 
+    const getAddToCartButton = () => {
+      return screen.queryByRole('button', { name: /add to cart/i });
+    };
+
+    const getQuantityControls = () => {
+      return {
+        quantity: screen.queryByRole('status'),
+        decrementButton: screen.queryByRole('button', { name: /-/i }),
+        incrementButton: screen.queryByRole('button', { name: '+' }),
+      };
+    };
+
+    const user = userEvent.setup();
+
+    const addToCart = async () => {
+      const button = getAddToCartButton();
+      await user.click(button!);
+    };
+
+    const incrementQuantity = async () => {
+      const { incrementButton } = getQuantityControls();
+      await user.click(incrementButton!);
+    };
+
+    const decrementQuantity = async () => {
+      const { decrementButton } = getQuantityControls();
+      await user.click(decrementButton!);
+    };
+
     return {
-      getAddToCartButton: () => {
-        return screen.queryByRole('button', { name: /add to cart/i });
-      },
-      getQuantityControls: () => {
-        return {
-          quantity: screen.queryByRole('status'),
-          decrementButton: screen.queryByRole('button', { name: /-/i }),
-          incrementButton: screen.queryByRole('button', { name: '+' }),
-        };
-      },
-      user: userEvent.setup(),
+      getAddToCartButton,
+      getQuantityControls,
+      addToCart,
+      incrementQuantity,
+      decrementQuantity,
     };
   };
 
@@ -41,9 +64,10 @@ describe('QuantitySelector', () => {
   });
 
   it('should add the product to the cart', async () => {
-    const { getAddToCartButton, user, getQuantityControls } = renderComponent();
+    const { getAddToCartButton, addToCart, getQuantityControls } =
+      renderComponent();
 
-    await user.click(getAddToCartButton()!); // 유저가 add to cart 버튼을 눌렀을 때
+    await addToCart(); // 유저가 add to cart 버튼을 눌렀을 때
 
     const { quantity, decrementButton, incrementButton } =
       getQuantityControls();
@@ -54,33 +78,43 @@ describe('QuantitySelector', () => {
   });
 
   it('should increment the quantity', async () => {
-    const { getAddToCartButton, user, getQuantityControls } = renderComponent();
-    await user.click(getAddToCartButton()!); // 카트에 추가하고
-    const { incrementButton, quantity } = getQuantityControls();
-    await user.click(incrementButton!); // + 버튼 누르면
+    const { addToCart, getQuantityControls, incrementQuantity } =
+      renderComponent();
+    await addToCart(); // 카트에 추가하고
+    await incrementQuantity(); // + 버튼 누르면
 
+    const { quantity } = getQuantityControls();
     expect(quantity).toHaveTextContent('2'); // quantity가 2인지
   });
 
   it('should decrement the quantity', async () => {
-    const { getAddToCartButton, user, getQuantityControls } = renderComponent();
-    await user.click(getAddToCartButton()!); // 카트에 추가하고
-    const { incrementButton, decrementButton, quantity } =
-      getQuantityControls();
-    await user.click(incrementButton!); // + 버튼 눌러진 상태에서
+    const {
+      incrementQuantity,
+      addToCart,
+      getQuantityControls,
+      decrementQuantity,
+    } = renderComponent();
+    await addToCart(); // 카트에 추가하고
+    const { quantity } = getQuantityControls();
+    await incrementQuantity(); // + 버튼 눌러진 상태에서
 
-    await user.click(decrementButton!); // - 버튼 누르면
+    await decrementQuantity(); // - 버튼 누르면
 
     expect(quantity).toHaveTextContent('1'); // quantity가 1인지
   });
 
   it('should remove the product from cart', async () => {
-    const { getAddToCartButton, user, getQuantityControls } = renderComponent();
-    await user.click(getAddToCartButton()!); // 카트에 추가하고
+    const {
+      getAddToCartButton,
+      addToCart,
+      getQuantityControls,
+      decrementQuantity,
+    } = renderComponent();
+    await addToCart(); // 카트에 추가하고
     const { incrementButton, decrementButton, quantity } =
       getQuantityControls();
 
-    await user.click(decrementButton!); // - 버튼을 누르면
+    await decrementQuantity(); // - 버튼을 누르면
 
     expect(quantity).not.toBeInTheDocument(); // quantity가 사라지고
     expect(decrementButton).not.toBeInTheDocument(); // - 버튼이 사라지고

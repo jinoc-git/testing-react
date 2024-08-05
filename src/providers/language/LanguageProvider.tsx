@@ -1,9 +1,9 @@
-import { ReactNode, useState } from "react";
+import { ReactNode, useState } from 'react';
 
-import LanguageContext from "./LanguageContext";
-import en from "./data/en.json";
-import es from "./data/es.json";
-import { Language } from "./type";
+import LanguageContext from './LanguageContext';
+import en from './data/en.json';
+import kr from './data/kr.json';
+import { Language } from './type';
 
 interface Props {
   language: Language;
@@ -17,7 +17,7 @@ export function LanguageProvider({ language, children }: Props) {
 
   const labelsDictionary: { [key: string]: { [key: string]: string } } = {
     en,
-    es,
+    kr,
   };
 
   const getLabel = (labelId: string) => {
@@ -31,8 +31,7 @@ export function LanguageProvider({ language, children }: Props) {
 
   return (
     <LanguageContext.Provider
-      value={{ currentLanguage, changeLanguage, getLabel }}
-    >
+      value={{ currentLanguage, changeLanguage, getLabel }}>
       {children}
     </LanguageContext.Provider>
   );

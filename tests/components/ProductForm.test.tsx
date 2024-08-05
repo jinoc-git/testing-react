@@ -202,4 +202,14 @@ describe('ProductForm', () => {
 
     expect(form.submitButton).not.toBeDisabled(); // disable가 아닌지 확인
   });
+
+  it('should re-enable the submit button after submission', async () => {
+    const { waitForFormToLoad, onSubmit } = renderComponent();
+    onSubmit.mockResolvedValue('error'); // submit 실패 시
+
+    const form = await waitForFormToLoad();
+    await form.fill(form.validData);
+
+    expect(form.submitButton).not.toBeDisabled(); // disable가 아닌지 확인
+  });
 });

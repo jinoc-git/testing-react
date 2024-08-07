@@ -29,4 +29,10 @@ describe('Router', () => {
 
     db.product.delete({ where: { id: { equals: product.id } } }); // 생성한 상품 삭제
   });
+
+  it('should render the not found page for invalid routes', () => {
+    navigateTo('invalid-route'); // 일치하는 경로가 아닌 route
+
+    expect(screen.getByText(/not found/i)).toBeInTheDocument(); // not found 인지 확인
+  });
 });

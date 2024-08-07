@@ -6,6 +6,8 @@ beforeAll(() => server.listen()); // 테스트 실행 전 한 번만 호출, moc
 afterEach(() => server.resetHandlers()); // 각 테스트 실행 후 매번 호출, mock api 재설정
 afterAll(() => server.close()); // 모든 테스트 이후 한 번만 호출, mock api 서버 종료
 
+vi.mock('@auth0/auth0-react'); // auth0 패키지 전체를 mocking
+
 // 테스트 파일 내에서 웹 api resizeObserver는 사용이 불가하기에 패키지로 사용할 수 있도록 함
 global.ResizeObserver = ResizeObserver;
 

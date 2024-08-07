@@ -1,14 +1,14 @@
 import '@testing-library/jest-dom/vitest'; // 이 부분을 추가하여 테스트 파일에 작성할 필요가 없어짐
 import ResizeObserver from 'resize-observer-polyfill';
 import { server } from './mocks/server';
-import { PropsWithChildren } from 'react';
+import { PropsWithChildren, ReactNode } from 'react';
 
 beforeAll(() => server.listen()); // 테스트 실행 전 한 번만 호출, mock api 서버 실행
 afterEach(() => server.resetHandlers()); // 각 테스트 실행 후 매번 호출, mock api 재설정
 afterAll(() => server.close()); // 모든 테스트 이후 한 번만 호출, mock api 서버 종료
 
+// auth0 패키지 전체를 mocking
 vi.mock('@auth0/auth0-react', () => {
-  // auth0 패키지 전체를 mocking
   return {
     useAuth0: vi.fn().mockReturnValue({
       isAuthenticated: false,
@@ -16,7 +16,9 @@ vi.mock('@auth0/auth0-react', () => {
       user: undefined,
     }),
     Auth0Provider: ({ children }: PropsWithChildren) => children,
-    withAuthenticationRequired: vi.fn(),
+    // withAuthenticationRequired는 Router.test.tsx에서 /admin 페이지가 정상 렌더링되는지 확인하기 위한거지
+    // 인증 확인 부분을 테스트하는것이 아니기에 인증 로직을 스킵하고 컴포넌트 그대로 렌더링하도록 mocking
+    withAuthenticationRequired: (component: ReactNode) => component,
   };
 });
 

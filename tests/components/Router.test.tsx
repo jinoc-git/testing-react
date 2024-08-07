@@ -35,4 +35,10 @@ describe('Router', () => {
 
     expect(screen.getByText(/not found/i)).toBeInTheDocument(); // not found 인지 확인
   });
+
+  it('should render the admin jome page for /admin', () => {
+    navigateTo('/admin');
+
+    expect(screen.getByRole('heading', { name: /admin/i })).toBeInTheDocument();
+  });
 });

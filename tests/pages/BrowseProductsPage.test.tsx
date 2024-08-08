@@ -16,8 +16,8 @@ describe('BrowseProductsPage', () => {
 
   // 2개의 카테고리와 각 카테고리에 2개씩 상품 생성
   beforeAll(() => {
-    [1, 2].forEach(() => {
-      const category = db.category.create();
+    [1, 2].forEach((item) => {
+      const category = db.category.create({ name: 'Category' + item });
       categories.push(category);
       [1, 2].forEach(() => {
         products.push(db.product.create({ categoryId: category.id }));
